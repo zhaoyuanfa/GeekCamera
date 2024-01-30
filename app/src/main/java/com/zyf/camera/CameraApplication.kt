@@ -1,0 +1,20 @@
+package com.zyf.camera
+
+import android.app.Application
+import com.zyf.camera.utils.ExceptionHandler
+
+class CameraApplication: Application() {
+    override fun onCreate() {
+        super.onCreate()
+
+        // 初始化设置
+
+        /**
+         * Handler for uncaught exceptions
+         */
+        val defaultExceptionHandler = Thread.getDefaultUncaughtExceptionHandler()
+        val exceptionHandler = ExceptionHandler(defaultExceptionHandler)
+        Thread.setDefaultUncaughtExceptionHandler(exceptionHandler)
+
+    }
+}
