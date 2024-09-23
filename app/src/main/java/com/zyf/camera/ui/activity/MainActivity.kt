@@ -23,8 +23,10 @@ import com.zyf.camera.databinding.ActivityMainBinding
 import com.zyf.camera.extensions.TAG
 import com.zyf.camera.hardware.camera.CameraManagerProxy
 import com.zyf.camera.helper.BluetoothHelper
+import com.zyf.camera.helper.RTSPHelper
 import com.zyf.camera.ui.base.BaseActivity
 import com.zyf.camera.ui.component.surface.SurfaceManager
+import com.zyf.camera.ui.module.MySingleton
 import net.majorkernelpanic.streaming.Session
 import java.net.NetworkInterface
 
@@ -37,6 +39,7 @@ class MainActivity : BaseActivity(), CameraManagerProxy.CameraOperationCallback,
     private lateinit var cameraManager: CameraManagerProxy
     private lateinit var surfaceManager: SurfaceManager
     private var previewSurface: Surface? = null
+    private var cameraDevice: CameraDevice? = null
     private val mainHandler = Handler(Looper.getMainLooper())
     var mRTSPSession: Session? = null
     var previewStarted = false
@@ -49,10 +52,6 @@ class MainActivity : BaseActivity(), CameraManagerProxy.CameraOperationCallback,
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableBluetooth()
-        mBTHelper = BluetoothHelper(this)
-        mBTHelper.onCreate()
-
         binding = ActivityMainBinding.inflate(layoutInflater).apply {
             setContentView(root)
         }
@@ -67,24 +66,33 @@ class MainActivity : BaseActivity(), CameraManagerProxy.CameraOperationCallback,
         val mRecordThread = HandlerThread("RecordThread")
         mRecordThread.start()
         mRecordHandler = Handler(mRecordThread.looper)
+
+        val mySingleton = MySingleton.getInstance(this)
+
+        MySingleton.getInstance(this)
     }
 
     override fun onResume() {
         super.onResume()
         paused = false
-        Log.d(TAG(), "onResume: ")
-        val size = Size(640, 480)
+        Log.d(TAG(), "onResume: E")
+        val size = Size(1920, 1080)
         surfaceManager.requestSurface(size)
         cameraManager.openCamera("0")
+        Log.d(TAG(), "onResume: X")
+//        enableBluetooth()
+//        mBTHelper = BluetoothHelper(this)
+//        mBTHelper.onCreate()
     }
 
     override fun onPause() {
         super.onPause()
+        Log.d(TAG(), "onPause: E")
         paused = true
-        Log.d(TAG(), "onPause: ")
         cameraManager.closeCamera()
         surfaceManager.onPause()
         previewSurface = null
+        Log.d(TAG(), "onPause: X")
     }
 
     override fun onDestroy() {
@@ -93,7 +101,7 @@ class MainActivity : BaseActivity(), CameraManagerProxy.CameraOperationCallback,
     }
 
     override fun onCameraOpened(cameraDevice: CameraDevice) {
-        if (previewSurface == null) {
+        if (previewSurface == null || paused) {
             return
         }
         cameraManager.createCaptureSession(previewSurface!!)
@@ -125,8 +133,7 @@ class MainActivity : BaseActivity(), CameraManagerProxy.CameraOperationCallback,
                         if (previewStarted.not()) {
                             Log.d(TAG(), "onCaptureCompleted: previewStarted = $previewStarted")
                             previewStarted = true
-//                            mRTSPSession?.start()
-
+                            onFirstPreviewFrame()
                         }
                     }
                 }, null
@@ -147,26 +154,18 @@ class MainActivity : BaseActivity(), CameraManagerProxy.CameraOperationCallback,
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
         Log.d(TAG(), "surfaceChanged: format = $format, width = $width, height = $height")
         previewSurface = holder.surface
-        cameraManager.createCaptureSession(previewSurface!!)
-
-//        val sessionBuilder = SessionBuilder.getInstance().setSurfaceHolder(holder).setContext(this)
-//            .setAudioEncoder(SessionBuilder.AUDIO_AAC).setVideoEncoder(SessionBuilder.VIDEO_H264)
-//            .setCamera(0).setDestination(InetAddress.getByName(getIpAddress()))
-//
-//        mRTSPSession = sessionBuilder.build().apply {
-//            destination = InetAddress.getByName(getIpAddress())
-//        }
-//        mRecordHandler.postDelayed({
-//            mRTSPSession?.start()
-//        }, 1000)
-//
-//        val ipAddress = getIpAddress()
-//        val rtspUrl = "rtsp://$ipAddress:${RtspServer.DEFAULT_RTSP_PORT}"
-//        Log.d(TAG(), "rtspUrl = $rtspUrl")
+        if (cameraDevice != null && !paused) {
+            cameraManager.createCaptureSession(previewSurface!!)
+        }
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
     }
+
+    private fun  onFirstPreviewFrame() {
+
+    }
+
 
     private fun getIpAddress(): String {
         var ip = ""

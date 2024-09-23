@@ -1,18 +1,18 @@
 /*
  * Copyright (C) 2011-2013 GUIGUI Simon, fyhertz@gmail.com
- * 
+ *
  * This file is part of Spydroid (http://code.google.com/p/spydroid-ipcamera/)
- * 
+ *
  * Spydroid is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
  * the Free Software Foundation; either version 3 of the License, or
  * (at your option) any later version.
- * 
+ *
  * This source code is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * You should have received a copy of the GNU General Public License
  * along with this source code; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
@@ -56,7 +56,7 @@ public class AACStream extends AudioStream {
 		"AAC Main",						  // 1
 		"AAC LC (Low Complexity)",		  // 2
 		"AAC SSR (Scalable Sample Rate)", // 3
-		"AAC LTP (Long Term Prediction)"  // 4	
+		"AAC LTP (Long Term Prediction)"  // 4
 	};
 
 	/** There are 13 supported frequencies by ADTS. **/
@@ -87,7 +87,7 @@ public class AACStream extends AudioStream {
 
 	public AACStream() throws IOException {
 		super();
-		
+
 		if (!AACStreamingSupported()) {
 			Log.e(TAG,"AAC not supported on this phone");
 			throw new AACNotSupportedException();
@@ -97,10 +97,10 @@ public class AACStream extends AudioStream {
 
 		if (mMode == MODE_MEDIARECORDER_API) {
 			mPacketizer = new AACADTSPacketizer();
-		} else { 
+		} else {
 			mPacketizer = new AACLATMPacketizer();
 		}
-		
+
 	}
 
 	private static boolean AACStreamingSupported() {
@@ -134,9 +134,8 @@ public class AACStream extends AudioStream {
 	}
 
 	@Override
-	@SuppressLint({ "InlinedApi", "NewApi" })
+	@SuppressLint({"InlinedApi", "NewApi", "MissingPermission"})
 	protected void encodeWithMediaCodec() throws IOException {
-		
 		// Checks if the user has supplied an exotic sampling rate
 		int i=0;
 		for (;i<AUDIO_SAMPLING_RATES.length;i++) {
@@ -146,11 +145,11 @@ public class AACStream extends AudioStream {
 		}
 		// If he did, we force a reasonable one: 24 kHz
 		if (i>12) mQuality.samplingRate = 24000;
-		
+
 		final int bufferSize = AudioRecord.getMinBufferSize(mQuality.samplingRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT)*2;
-		
+
 		((AACLATMPacketizer)mPacketizer).setSamplingRate(mQuality.samplingRate);
-		
+
 		mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, mQuality.samplingRate, AudioFormat.CHANNEL_IN_MONO, AudioFormat.ENCODING_PCM_16BIT, bufferSize);
 		mMediaCodec = MediaCodec.createEncoderByType("audio/mp4a-latm");
 		MediaFormat format = new MediaFormat();
