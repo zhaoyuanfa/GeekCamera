@@ -1,6 +1,6 @@
 package com.zyf.camera.ui.component.surface
 
-import android.util.Log
+import com.zyf.camera.utils.Logger
 import android.util.Size
 import android.view.SurfaceHolder
 import android.view.SurfaceView
@@ -8,17 +8,17 @@ import com.zyf.camera.databinding.ActivityMainBinding
 import com.zyf.camera.extensions.TAG
 
 class SurfaceManager(binding: ActivityMainBinding) {
-    private var surfaceView: SurfaceView
+    private var surfaceView: SurfaceView = binding.surfaceView
     private var surfaceCallback: SurfaceHolder.Callback? = null
     private var previewSize: Size? = null
     private var mSurfaceCallBack = object : SurfaceHolder.Callback {
         override fun surfaceCreated(holder: SurfaceHolder) {
-            Log.d(TAG(), "surfaceCreated: ")
+            Logger.d(TAG(), "surfaceCreated: ")
             surfaceCallback?.surfaceCreated(holder)
         }
 
         override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-            Log.d(TAG(), "surfaceChanged: format = $format, width = $width, height = $height")
+            Logger.d(TAG(), "surfaceChanged: format = $format, width = $width, height = $height")
             if (previewSize == null) {
                 return
             }
@@ -26,20 +26,19 @@ class SurfaceManager(binding: ActivityMainBinding) {
         }
 
         override fun surfaceDestroyed(holder: SurfaceHolder) {
-            Log.d(TAG(), "surfaceDestroyed: ")
+            Logger.d(TAG(), "surfaceDestroyed: ")
             surfaceCallback?.surfaceDestroyed(holder)
         }
     }
 
     init {
-        surfaceView = binding.surfaceView
         surfaceView.holder.addCallback(mSurfaceCallBack)
     }
 
     fun requestSurface(size: Size) {
-        Log.d(TAG(), "requestSurface: size = $size")
+        Logger.d(TAG(), "requestSurface: size = $size")
         previewSize = size
-        Log.d(
+        Logger.d(
             TAG(),
             "requestSurface: surfaceView.width = ${surfaceView.layoutParams.width}, " +
                     "surfaceView.height = ${surfaceView.layoutParams.height}"

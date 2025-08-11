@@ -8,7 +8,6 @@ class CameraApplication: Application() {
         super.onCreate()
 
         // 初始化设置
-
         /**
          * Handler for uncaught exceptions
          */

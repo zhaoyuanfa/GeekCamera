@@ -10,7 +10,7 @@ import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
 import android.os.Message
-import android.util.Log
+import com.zyf.camera.utils.Logger
 import android.view.Surface
 import com.zyf.camera.extensions.TAG
 
@@ -29,38 +29,38 @@ class CameraManagerProxy(context: Context) {
     private var cameraState: Int = 0
     private val cameraDeviceStateCallback = object : CameraDevice.StateCallback() {
         override fun onOpened(camera: CameraDevice) {
-            Log.d(TAG(), "onOpened: camera$cameraDeviceId = $camera")
+            Logger.d(TAG(), "onOpened: camera$cameraDeviceId = $camera")
             cameraState = 1
             cameraDevice = camera
             cameraOperationCallback?.onCameraOpened(camera)
         }
 
         override fun onDisconnected(camera: CameraDevice) {
-            Log.d(TAG(), "onDisconnected: camera$cameraDeviceId = $camera")
+            Logger.d(TAG(), "onDisconnected: camera$cameraDeviceId = $camera")
             cameraState = 0
             cameraOperationCallback?.onDisconnected(camera)
         }
 
         override fun onError(camera: CameraDevice, error: Int) {
-            Log.d(TAG(), "onError: camera$cameraDeviceId = $camera, error = $error")
+            Logger.d(TAG(), "onError: camera$cameraDeviceId = $camera, error = $error")
             cameraState = 0
             cameraOperationCallback?.onError(camera, error)
         }
 
         override fun onClosed(camera: CameraDevice) {
             super.onClosed(camera)
-            Log.d(TAG(), "onClosed: camera$cameraDeviceId = $camera")
+            Logger.d(TAG(), "onClosed: camera$cameraDeviceId = $camera")
         }
     }
     private val SessionStateCallback = object : CameraCaptureSession.StateCallback() {
         override fun onConfigured(session: CameraCaptureSession) {
-            Log.d(TAG(), "onConfigured: session = $session")
+            Logger.d(TAG(), "onConfigured: session = $session")
             cameraCaptureSession = session
             cameraOperationCallback?.onCameraSessionCreated(session)
         }
 
         override fun onConfigureFailed(session: CameraCaptureSession) {
-            Log.d(TAG(), "onConfigureFailed: session = $session")
+            Logger.d(TAG(), "onConfigureFailed: session = $session")
             cameraOperationCallback?.onCameraSessionAborted(session)
         }
     }
@@ -82,7 +82,7 @@ class CameraManagerProxy(context: Context) {
             super.handleMessage(msg)
             when (msg.what) {
                 CameraEvent.OPEN.ordinal -> {
-                    Log.d(TAG(), "handleMessage: CameraEvent.OPEN")
+                    Logger.d(TAG(), "handleMessage: CameraEvent.OPEN")
                     cameraManager.openCamera(
                         "0",
                         cameraDeviceStateCallback,
@@ -91,13 +91,13 @@ class CameraManagerProxy(context: Context) {
                 }
 
                 CameraEvent.CLOSE.ordinal -> {
-                    Log.d(TAG(), "handleMessage: CameraEvent.CLOSE")
+                    Logger.d(TAG(), "handleMessage: CameraEvent.CLOSE")
                     cameraDevice?.close()
                     cameraState = 0
                 }
 
                 CameraEvent.CREATE_SESSION.ordinal -> {
-                    Log.d(TAG(), "handleMessage: CameraEvent.CREATE_SESSION, surface = ${msg.obj}")
+                    Logger.d(TAG(), "handleMessage: CameraEvent.CREATE_SESSION, surface = ${msg.obj}")
                     val surfaceList = ArrayList<Surface>()
                     surfaceList.add(msg.obj as Surface)
                     cameraDevice?.createCaptureSession(
@@ -136,9 +136,9 @@ class CameraManagerProxy(context: Context) {
 
     private var previewSurface: Surface? = null
     fun createCaptureSession(surface: Surface) {
-        Log.d(TAG(), "createCaptureSession: surface = $surface")
+        Logger.d(TAG(), "createCaptureSession: surface = $surface")
         if (cameraState == 0) {
-            Log.d(TAG(), "createCaptureSession: cameraState = $cameraState")
+            Logger.d(TAG(), "createCaptureSession: cameraState = $cameraState")
             return
         }
         previewSurface = surface

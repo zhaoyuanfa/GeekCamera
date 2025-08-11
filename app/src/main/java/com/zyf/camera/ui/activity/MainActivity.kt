@@ -1,10 +1,6 @@
 package com.zyf.camera.ui.activity
 
 import android.annotation.SuppressLint
-import android.app.Activity
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
-import android.content.Intent
 import android.hardware.camera2.CameraCaptureSession
 import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CaptureRequest
@@ -13,22 +9,15 @@ import android.os.Bundle
 import android.os.Handler
 import android.os.HandlerThread
 import android.os.Looper
-import android.util.Log
 import android.util.Size
 import android.view.Surface
 import android.view.SurfaceHolder
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import com.zyf.camera.databinding.ActivityMainBinding
 import com.zyf.camera.extensions.TAG
 import com.zyf.camera.hardware.camera.CameraManagerProxy
-import com.zyf.camera.helper.BluetoothHelper
-import com.zyf.camera.helper.RTSPHelper
 import com.zyf.camera.ui.base.BaseActivity
 import com.zyf.camera.ui.component.surface.SurfaceManager
-import com.zyf.camera.ui.module.MySingleton
-import net.majorkernelpanic.streaming.Session
-import java.net.NetworkInterface
+import com.zyf.camera.utils.Logger
 
 
 @SuppressLint("MissingPermission")
@@ -36,19 +25,17 @@ class MainActivity : BaseActivity(), CameraManagerProxy.CameraOperationCallback,
     SurfaceHolder.Callback {
 
     private lateinit var binding: ActivityMainBinding
-    private lateinit var cameraManager: CameraManagerProxy
+    private lateinit var cameraManagerProxy: CameraManagerProxy
     private lateinit var surfaceManager: SurfaceManager
     private var previewSurface: Surface? = null
     private var cameraDevice: CameraDevice? = null
     private val mainHandler = Handler(Looper.getMainLooper())
-    var mRTSPSession: Session? = null
     var previewStarted = false
 
     private var paused = false
 
     private lateinit var mRecordHandler: Handler
 
-    private lateinit var mBTHelper: BluetoothHelper
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -57,70 +44,79 @@ class MainActivity : BaseActivity(), CameraManagerProxy.CameraOperationCallback,
         }
         surfaceManager = SurfaceManager(binding)
         surfaceManager.setSurfaceCallback(this)
-        cameraManager = CameraManagerProxy(this)
-        cameraManager.setCameraOperationCallback(this)
+        cameraManagerProxy = CameraManagerProxy(this)
+        cameraManagerProxy.setCameraOperationCallback(this)
 
-
-//        this.startService(Intent(this, RtspServer::class.java))
 
         val mRecordThread = HandlerThread("RecordThread")
         mRecordThread.start()
         mRecordHandler = Handler(mRecordThread.looper)
-
-        val mySingleton = MySingleton.getInstance(this)
-
-        MySingleton.getInstance(this)
     }
 
     override fun onResume() {
         super.onResume()
         paused = false
-        Log.d(TAG(), "onResume: E")
+        Logger.d(TAG(), "onResume: E")
         val size = Size(1920, 1080)
         surfaceManager.requestSurface(size)
-        cameraManager.openCamera("0")
-        Log.d(TAG(), "onResume: X")
-//        enableBluetooth()
-//        mBTHelper = BluetoothHelper(this)
-//        mBTHelper.onCreate()
+        cameraManagerProxy.openCamera("0")
+        Logger.d(TAG(), "onResume: X")
     }
 
     override fun onPause() {
         super.onPause()
-        Log.d(TAG(), "onPause: E")
+        Logger.d(TAG(), "onPause: E")
         paused = true
-        cameraManager.closeCamera()
+        cameraManagerProxy.closeCamera()
         surfaceManager.onPause()
         previewSurface = null
-        Log.d(TAG(), "onPause: X")
+        Logger.d(TAG(), "onPause: X")
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        cameraManager.onDestory()
+        cameraManagerProxy.onDestory()
     }
 
     override fun onCameraOpened(cameraDevice: CameraDevice) {
         if (previewSurface == null || paused) {
             return
         }
-        cameraManager.createCaptureSession(previewSurface!!)
+        cameraManagerProxy.createCaptureSession(previewSurface!!)
     }
 
     override fun onDisconnected(camera: CameraDevice) {
+        Logger.d(TAG(), "onDisconnected: Camera disconnected")
     }
 
     override fun onError(camera: CameraDevice, error: Int) {
+        Logger.e(TAG(), "onError: Camera error occurred, error code: $error")
+        when (error) {
+            CameraDevice.StateCallback.ERROR_CAMERA_DEVICE -> {
+                Logger.e(TAG(), "Camera device error")
+            }
+            CameraDevice.StateCallback.ERROR_CAMERA_DISABLED -> {
+                Logger.e(TAG(), "Camera disabled")
+            }
+            CameraDevice.StateCallback.ERROR_CAMERA_SERVICE -> {
+                Logger.e(TAG(), "Camera service error")
+            }
+            else -> {
+                Logger.e(TAG(), "Unknown camera error: $error")
+            }
+        }
+        camera.close()
     }
 
     override fun onCameraClosed(cameraDevice: CameraDevice) {
+        Logger.d(TAG(), "onCameraClosed: Camera closed")
     }
 
     override fun onCameraSessionCreated(session: CameraCaptureSession) {
         if (paused) {
             return
         }
-        cameraManager.createPreviewRequest()?.let {
+        cameraManagerProxy.createPreviewRequest()?.let {
             session.setRepeatingRequest(
                 it, object : CameraCaptureSession.CaptureCallback() {
 
@@ -131,7 +127,7 @@ class MainActivity : BaseActivity(), CameraManagerProxy.CameraOperationCallback,
                     ) {
                         super.onCaptureCompleted(session, request, result)
                         if (previewStarted.not()) {
-                            Log.d(TAG(), "onCaptureCompleted: previewStarted = $previewStarted")
+                            Logger.d(TAG(), "onCaptureCompleted: previewStarted = $previewStarted")
                             previewStarted = true
                             onFirstPreviewFrame()
                         }
@@ -142,64 +138,37 @@ class MainActivity : BaseActivity(), CameraManagerProxy.CameraOperationCallback,
     }
 
     override fun onCameraSessionAborted(session: CameraCaptureSession) {
+        Logger.w(TAG(), "onCameraSessionAborted: Camera session aborted")
+        cameraDevice?.close()
+        cameraDevice = null
+        previewStarted = false
     }
 
     override fun onCameraSessionClosed(session: CameraCaptureSession) {
+        Logger.d(TAG(), "onCameraSessionClosed: Camera session closed")
+        cameraDevice?.close()
+        cameraDevice = null
+        previewStarted = false
     }
 
     override fun surfaceCreated(holder: SurfaceHolder) {
+        Logger.d(TAG(), "surfaceCreated: holder = $holder")
     }
 
 
     override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        Log.d(TAG(), "surfaceChanged: format = $format, width = $width, height = $height")
+        Logger.d(TAG(), "surfaceChanged: format = $format, width = $width, height = $height")
         previewSurface = holder.surface
         if (cameraDevice != null && !paused) {
-            cameraManager.createCaptureSession(previewSurface!!)
+            cameraManagerProxy.createCaptureSession(previewSurface!!)
         }
     }
 
     override fun surfaceDestroyed(holder: SurfaceHolder) {
+        Logger.d(TAG(), "surfaceDestroyed: holder = $holder")
     }
 
     private fun  onFirstPreviewFrame() {
-
-    }
-
-
-    private fun getIpAddress(): String {
-        var ip = ""
-        try {
-            val enumNetworkInterfaces = NetworkInterface.getNetworkInterfaces()
-            while (enumNetworkInterfaces.hasMoreElements()) {
-                val networkInterface = enumNetworkInterfaces.nextElement()
-                val enumInetAddress = networkInterface.inetAddresses
-                while (enumInetAddress.hasMoreElements()) {
-                    val inetAddress = enumInetAddress.nextElement()
-                    if (inetAddress.isSiteLocalAddress) {
-                        ip += inetAddress.hostAddress
-                    }
-                }
-            }
-        } catch (e: Exception) {
-            e.printStackTrace()
-            ip += "Something Wrong! " + e.toString() + "\n"
-        }
-        return ip
-    }
-
-    fun enableBluetooth() {
-        val bluetoothLauncher = registerForActivityResult(
-            ActivityResultContracts.StartActivityForResult()
-        ) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                Log.d(TAG(), "enableBluetooth: ")
-            } else {
-                Log.d(TAG(), "enableBluetooth: failed")
-            }
-        }
-
-        // 启动 Activity
-        bluetoothLauncher.launch(Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE))
+        Logger.d(TAG(), "onFirstPreviewFrame: First preview frame received")
     }
 }

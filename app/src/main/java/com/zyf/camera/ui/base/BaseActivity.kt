@@ -6,7 +6,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Environment
 import android.provider.Settings
-import android.util.Log
+import com.zyf.camera.utils.Logger
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import com.zyf.camera.extensions.TAG
@@ -49,18 +49,6 @@ open class BaseActivity : ComponentActivity() {
             if (checkSelfPermission(android.Manifest.permission.ACCESS_COARSE_LOCATION) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
                 return false
             }
-//            if (checkSelfPermission(android.Manifest.permission.BLUETOOTH) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-//                return false
-//            }
-//            if (checkSelfPermission(android.Manifest.permission.BLUETOOTH_ADMIN) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-//                return false
-//            }
-//            if (checkSelfPermission(android.Manifest.permission.BLUETOOTH_CONNECT) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-//                return false
-//            }
-//            if (checkSelfPermission(android.Manifest.permission.BLUETOOTH_SCAN) != android.content.pm.PackageManager.PERMISSION_GRANTED) {
-//                return false
-//            }
         }
         return true
     }
@@ -69,13 +57,13 @@ open class BaseActivity : ComponentActivity() {
     private val requestMultiplePermissions =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { permissions ->
             permissions.entries.forEach {
-                Log.d(TAG(), "${it.key} = ${it.value}")
+                Logger.d(TAG(), "${it.key} = ${it.value}")
             }
         }
 
     // 申请权限的方法
     private fun requestPermissions() {
-        Log.d(TAG(), "requestPermissions: E")
+        Logger.d(TAG(), "requestPermissions: E")
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
             if (!Environment.isExternalStorageManager()) {
                 val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION)
@@ -98,6 +86,6 @@ open class BaseActivity : ComponentActivity() {
 //                android.Manifest.permission.BLUETOOTH_SCAN,
             ),
         )
-        Log.d(TAG(), "requestPermissions: X")
+        Logger.d(TAG(), "requestPermissions: X")
     }
 }

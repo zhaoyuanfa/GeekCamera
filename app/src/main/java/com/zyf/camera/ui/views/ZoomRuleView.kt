@@ -6,7 +6,7 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
-import android.util.Log
+import com.zyf.camera.utils.Logger
 import android.view.MotionEvent
 import android.view.View
 import com.zyf.camera.R
@@ -59,7 +59,7 @@ class ZoomRuleView : View {
     }
 
     override fun onAttachedToWindow() {
-        Log.d(TAG, "onAttachedToWindow")
+        Logger.d(TAG, "onAttachedToWindow")
         lastX = width / 2f
         super.onAttachedToWindow()
     }
@@ -72,8 +72,8 @@ class ZoomRuleView : View {
         val heightSize = MeasureSpec.getSize(heightMeasureSpec)
         super.onMeasure(widthMeasureSpec, heightMeasureSpec)
         lastX = widthSize / 2f
-        Log.d(TAG, "onMeasure lastX = $lastX")
-        Log.d(
+        Logger.d(TAG, "onMeasure lastX = $lastX")
+        Logger.d(
             TAG,
             "widthMode: $widthMode, widthSize: $widthSize, heightMode: $heightMode, heightSize: $heightSize"
         )
@@ -95,7 +95,7 @@ class ZoomRuleView : View {
             width / 2f,
             height / 2f + 20f,
             getPaint().apply { color = Color.GREEN })
-        Log.d(TAG, "current zoom = ${getZoomValue(width / 2f)}")
+        Logger.d(TAG, "current zoom = ${getZoomValue(width / 2f)}")
     }
 
     private fun getPaint(): Paint {
@@ -108,7 +108,7 @@ class ZoomRuleView : View {
     }
 
     private fun getDistance(index: Int, standardInterval: Float): Float {
-        Log.d(TAG, "index = $index")
+        Logger.d(TAG, "index = $index")
         val denominator: Float
         return if (index >= 0) {
             denominator = 0.1f * index + 1f
@@ -124,10 +124,10 @@ class ZoomRuleView : View {
     private fun generateLines(): FloatArray {
         val lineNumber =
             (valueTo - valueFrom).toInt() * 10 + ((valueTo - valueFrom) * 10 % 10).toInt()
-        Log.d(TAG, "lineNumber = $lineNumber")
+        Logger.d(TAG, "lineNumber = $lineNumber")
         defaultIndex =
             (referenceValue - valueFrom).toInt() * 10 + ((referenceValue - valueFrom) * 10 % 10).toInt() - 1
-        Log.d(TAG, "defaultIndex = $defaultIndex")
+        Logger.d(TAG, "defaultIndex = $defaultIndex")
         val keyPointIndexStep = 10
         val factor = 2f
         val standardInterval = 25f
@@ -164,20 +164,20 @@ class ZoomRuleView : View {
             ticklines!![i * 4 + 1] = y0
             ticklines!![i * 4 + 2] = viewCenterX + distance + delta + offset
             ticklines!![i * 4 + 3] = viewCenterY + 5f
-            Log.d(
+            Logger.d(
                 TAG,
                 "realIndex = $realIndex, realIndex % keyPointIndexStep = ${realIndex % keyPointIndexStep}"
             )
             currentInterval = getDistance(realIndex, standardInterval)
-            Log.d(TAG, "currentInterval = $currentInterval")
+            Logger.d(TAG, "currentInterval = $currentInterval")
             distance += currentInterval
-            Log.d(TAG, "distance = $distance")
+            Logger.d(TAG, "distance = $distance")
         }
         return ticklines as FloatArray
     }
 
     private fun getZoomValue(distance: Float): Float {
-        Log.d(TAG, "distance = $distance")
+        Logger.d(TAG, "distance = $distance")
         val tmpTickLines = ticklines?.clone() ?: return referenceValue
         if (distance <= tmpTickLines[0]) {
             return valueFrom
@@ -201,12 +201,12 @@ class ZoomRuleView : View {
             }
         }
         i = min(left, right)
-        Log.d(TAG, "final i = $i")
+        Logger.d(TAG, "final i = $i")
         val deltaDistanceRatio =
             (distance - ticklines!![i * 4]) / (ticklines!![(i + 1) * 4] - ticklines!![i * 4])
         val deltaValue = deltaDistanceRatio * 0.1f
         val result = referenceValue + 0.1f * (i - defaultIndex) + deltaValue
-        Log.d(TAG, "result = $result")
+        Logger.d(TAG, "result = $result")
         return result
     }
 
@@ -226,7 +226,7 @@ class ZoomRuleView : View {
 
             MotionEvent.ACTION_MOVE -> {
                 delta = event.x - start
-                Log.d(TAG, "delta = $delta")
+                Logger.d(TAG, "delta = $delta")
                 invalidate()
             }
 
