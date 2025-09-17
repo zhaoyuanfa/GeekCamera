@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">GeekCamera</string>
+    <string name="photo_mode">Photo mode</string>
+    <string name="video_mode">Video mode</string>
 </resources>

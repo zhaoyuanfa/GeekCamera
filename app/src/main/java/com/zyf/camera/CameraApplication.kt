@@ -2,7 +2,9 @@ package com.zyf.camera
 
 import android.app.Application
 import com.zyf.camera.utils.ExceptionHandler
+import dagger.hilt.android.HiltAndroidApp
 
+@HiltAndroidApp
 class CameraApplication: Application() {
     override fun onCreate() {
         super.onCreate()

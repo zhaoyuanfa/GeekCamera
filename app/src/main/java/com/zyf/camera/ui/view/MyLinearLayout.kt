@@ -1,4 +1,4 @@
-package com.zyf.camera.ui.views
+package com.zyf.camera.ui.view
 
 import android.content.Context
 import android.util.AttributeSet
