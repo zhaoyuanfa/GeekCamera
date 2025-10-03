@@ -6,4 +6,7 @@
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
     <color name="white_transparent">#80FFFFFF</color>
+    <color name="white_60">#99FFFFFF</color>
+    <color name="mode_selected">#CC000000</color>
+    <color name="mode_unselected">#66000000</color>
 </resources>

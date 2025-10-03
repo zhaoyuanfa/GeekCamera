@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+
+    <!-- 摄像头主体 -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M20,4h-3.17L15,2H9L7.17,4H4C2.9,4 2,4.9 2,6v12c0,1.1 0.9,2 2,2h16c1.1,0 2,-0.9 2,-2V6C22,4.9 21.1,4 20,4z"/>
+
+    <!-- 摄像头镜头外圈 -->
+    <path
+        android:fillColor="#424242"
+        android:pathData="M12,7c2.76,0 5,2.24 5,5s-2.24,5 -5,5s-5,-2.24 -5,-5S9.24,7 12,7z"/>
+
+    <!-- 摄像头镜头内圈 -->
+    <path
+        android:fillColor="#212121"
+        android:pathData="M12,8.5c1.93,0 3.5,1.57 3.5,3.5s-1.57,3.5 -3.5,3.5s-3.5,-1.57 -3.5,-3.5S10.07,8.5 12,8.5z"/>
+
+    <!-- 镜头反光 -->
+    <path
+        android:fillColor="#666666"
+        android:pathData="M12,10c1.1,0 2,0.9 2,2s-0.9,2 -2,2s-2,-0.9 -2,-2S10.9,10 12,10z"/>
+
+    <!-- 箭头指示旋转方向 -->
+    <path
+        android:fillColor="#4A90E2"
+        android:pathData="M16.5,8.5l-1.5,1.5l2.5,2l-2.5,2l1.5,1.5l4,-3.5z"/>
+    
+    <path
+        android:fillColor="#4A90E2"
+        android:pathData="M7.5,15.5l1.5,-1.5l-2.5,-2l2.5,-2l-1.5,-1.5l-4,3.5z"/>
+
+    <!-- 双箭头环绕效果 -->
+    <path
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#4A90E2"
+        android:strokeWidth="2"
+        android:strokeAlpha="0.7"
+        android:pathData="M12,6 A6,6 0 0,1 18,12 A6,6 0 0,1 12,18 A6,6 0 0,1 6,12 A6,6 0 0,1 12,6"/>
+
+</vector>

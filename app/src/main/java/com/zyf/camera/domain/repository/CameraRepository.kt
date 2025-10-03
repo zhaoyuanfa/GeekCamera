@@ -13,5 +13,7 @@ interface CameraRepository {
     suspend fun switchCamera()
     suspend fun toggleFlash()
     fun setCameraMode(mode: CameraMode)
+    suspend fun setZoom(zoom: Float)
+    suspend fun setExposure(exposure: Int)
     fun close()
 }

@@ -3,6 +3,8 @@ package com.zyf.camera.di
 import android.content.Context
 import com.zyf.camera.data.datasource.CameraDataSource
 import com.zyf.camera.data.datasource.CameraDataSourceImpl
+import com.zyf.camera.data.manager.CameraCapabilityManager
+import com.zyf.camera.data.manager.CameraOperationManager
 import com.zyf.camera.data.repository.CameraRepositoryImpl
 import com.zyf.camera.domain.repository.CameraRepository
 import com.zyf.camera.domain.usercase.CaptureImageUseCase
@@ -22,8 +24,26 @@ object CameraModule {
 
     @Provides
     @Singleton
-    fun provideCameraDataSource(@ApplicationContext context: Context): CameraDataSource {
-        return CameraDataSourceImpl(context)
+    fun provideCameraCapabilityManager(@ApplicationContext context: Context): CameraCapabilityManager {
+        return CameraCapabilityManager(context)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCameraOperationManager(
+        capabilityManager: CameraCapabilityManager
+    ): CameraOperationManager {
+        return CameraOperationManager(capabilityManager)
+    }
+
+    @Provides
+    @Singleton
+    fun provideCameraDataSource(
+        @ApplicationContext context: Context,
+        capabilityManager: CameraCapabilityManager,
+        operationManager: CameraOperationManager
+    ): CameraDataSource {
+        return CameraDataSourceImpl(context, capabilityManager, operationManager)
     }
 
     @Provides

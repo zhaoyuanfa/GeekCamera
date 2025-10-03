@@ -1,62 +1,79 @@
 package com.zyf.camera.data.controller
 
-import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraCaptureSession
-import android.hardware.camera2.CaptureRequest
+import android.hardware.camera2.CameraDevice
 import android.hardware.camera2.CameraManager
-import android.hardware.camera2.CameraMetadata
-import android.hardware.camera2.params.MeteringRectangle
-import android.os.Handler
-import android.os.Looper
-import com.zyf.camera.domain.model.CameraMode
+import android.hardware.camera2.CaptureRequest
+import com.zyf.camera.data.controller.base.BaseCameraController
 import com.zyf.camera.utils.Logger
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
-interface FocusController {
-    suspend fun focusAt(x: Float, y: Float, mode: CameraMode)
-}
+class FocusController(
+    cameraManager: CameraManager,
+    getCurrentCameraId: () -> String,
+    getCameraDevice: () -> CameraDevice?,
+    getCaptureSession: () -> CameraCaptureSession?
+) : BaseCameraController(cameraManager, getCurrentCameraId, getCameraDevice, getCaptureSession) {
 
-class CameraFocusController(
-    private val cameraManager: CameraManager,
-    private val getCurrentCameraId: () -> String,
-    private val getCameraDevice: () -> CameraDevice?,
-    private val getCaptureSession: () -> CameraCaptureSession?,
-    private val getImageReaderSurface: () -> android.view.Surface?,
-    private val getFlashMode: () -> Int
-) : FocusController {
-    override suspend fun focusAt(x: Float, y: Float, mode: CameraMode) {
-        Logger.d("CameraFocusController", "focusAt called, x=$x, y=$y, mode=$mode")
-        withContext(Dispatchers.IO) {
-            val device = getCameraDevice() ?: throw IllegalStateException("Camera not opened")
-            val session = getCaptureSession() ?: throw IllegalStateException("Session not ready")
-            val cameraId = getCurrentCameraId()
-            val characteristics = cameraManager.getCameraCharacteristics(cameraId)
-            val sensorArraySize = characteristics.get(android.hardware.camera2.CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE)
-                ?: throw IllegalStateException("No sensor info")
-            val focusX = (x * sensorArraySize.width()).toInt()
-            val focusY = (y * sensorArraySize.height()).toInt()
-            val focusArea = MeteringRectangle(
-                (focusX - 100).coerceAtLeast(0),
-                (focusY - 100).coerceAtLeast(0),
-                200, 200,
-                MeteringRectangle.METERING_WEIGHT_MAX
-            )
-            val template = when (mode) {
-                CameraMode.PHOTO -> CameraDevice.TEMPLATE_STILL_CAPTURE
-                CameraMode.VIDEO -> CameraDevice.TEMPLATE_RECORD
-                else -> CameraDevice.TEMPLATE_PREVIEW
+    companion object {
+        private const val TAG = "FocusController"
+    }
+
+    private val _focusState = MutableStateFlow(false)
+    val focusState = _focusState.asStateFlow()
+
+    private val _isAutoFocus = MutableStateFlow(true)
+    val isAutoFocus = _isAutoFocus.asStateFlow()
+
+    override val isSupported = true
+    override val isEnabled = true
+
+    override fun checkSupport(): Boolean = true
+
+    override suspend fun onInitialize() {
+        Logger.d(TAG, "Initializing focus controller")
+        _focusState.value = true
+        _isAutoFocus.value = true
+    }
+
+    override suspend fun onRelease() {
+        Logger.d(TAG, "Releasing focus controller")
+        _focusState.value = false
+        _isAutoFocus.value = true
+    }
+
+    override suspend fun onReset() {
+        Logger.d(TAG, "Resetting focus controller")
+        _focusState.value = false
+        _isAutoFocus.value = true
+    }
+
+    fun setAutoFocus(enabled: Boolean) {
+        Logger.d(TAG, "setAutoFocus: $enabled")
+        _isAutoFocus.value = enabled
+    }
+
+    fun performFocus() {
+        _focusState.value = !_focusState.value
+        Logger.d(TAG, "performFocus -> focusState=${_focusState.value}")
+    }
+
+    // 对焦到指定位置
+    suspend fun focusAt(x: Float, y: Float): Boolean {
+        Logger.d(TAG, "Focus at ($x, $y)")
+        return try {
+            val device = getCameraDevice()
+            if (device != null) {
+                val builder = device.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW)
+                builder.set(CaptureRequest.CONTROL_AF_TRIGGER, CaptureRequest.CONTROL_AF_TRIGGER_START)
+                applyCaptureRequest(builder)
+            } else {
+                false
             }
-            val builder = device.createCaptureRequest(template).apply {
-                getImageReaderSurface()?.let { addTarget(it) }
-                set(CaptureRequest.CONTROL_AF_REGIONS, arrayOf(focusArea))
-                set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_AUTO)
-                set(CaptureRequest.CONTROL_AF_TRIGGER, CameraMetadata.CONTROL_AF_TRIGGER_START)
-                set(CaptureRequest.FLASH_MODE, getFlashMode())
-            }
-            Logger.d("CameraFocusController", "focusAt: sending AF trigger, mode=$mode")
-            session.capture(builder.build(), null, Handler(Looper.getMainLooper()))
+        } catch (e: Exception) {
+            Logger.e(TAG, "Failed to focus at position: ${e.message}")
+            false
         }
     }
 }
-
